@@ -35,6 +35,8 @@ class MCPServer(ABC):
 
     is_running: bool = False
 
+    allowed_tools: list[str] | None = None
+
     _client: ClientSession
     _read_stream: MemoryObjectReceiveStream[JSONRPCMessage | Exception]
     _write_stream: MemoryObjectSendStream[JSONRPCMessage]
@@ -66,6 +68,7 @@ class MCPServer(ABC):
                 parameters_json_schema=tool.inputSchema,
             )
             for tool in tools.tools
+            if self.allowed_tools is None or tool.name in self.allowed_tools
         ]
 
     async def call_tool(self, tool_name: str, arguments: dict[str, Any]) -> CallToolResult:
@@ -78,6 +81,9 @@ class MCPServer(ABC):
         Returns:
             The result of the tool call.
         """
+        if self.allowed_tools is not None and tool_name not in self.allowed_tools:
+            raise ValueError(f'Tool {tool_name} is not in the list of allowed_tools')
+
         return await self._client.call_tool(tool_name, arguments)
 
     async def __aenter__(self) -> Self:
@@ -139,6 +145,9 @@ class MCPServerStdio(MCPServer):
     If you want to inherit the environment variables from the parent process, use `env=os.environ`.
     """
 
+    allowed_tools: list[str] | None = None
+    """A list of tool names that can be called on this mcp server"""
+
     @asynccontextmanager
     async def client_streams(
         self,
@@ -196,6 +205,9 @@ class MCPServerHTTP(MCPServer):
 
     sse_read_timeout: float = 60 * 5
     """The read timeout used for httpx.Timeout config within MCP sdk sse_client."""
+
+    allowed_tools: list[str] | None = None
+    """A list of tool names that can be called on this mcp server"""
 
     @asynccontextmanager
     async def client_streams(
