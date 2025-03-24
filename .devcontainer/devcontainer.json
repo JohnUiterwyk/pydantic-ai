@@ -1,0 +1,17 @@
+{
+    "name": "Pydantic AI",
+    "dockerFile": "Dockerfile",
+    "runArgs": [
+      "--init"
+    ],
+    "customizations": {
+      "vscode": {
+        "extensions": [
+            "ms-python.python",
+            "ms-python.vscode-pylance",
+            "mhutchie.git-graph"
+        ]
+      }
+    },
+    "postCreateCommand": "make install",
+  }
